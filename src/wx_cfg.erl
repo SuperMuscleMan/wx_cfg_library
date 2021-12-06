@@ -7,7 +7,7 @@
 
 %% API
 -export([start_link/0]).
--export([set/3, set/4, set/5, get/2, get/1]).
+-export([set/3, set/4, set/5, get/2, get/1, del/2]).
 
 %% gen_server callbacks
 -export([init/1,
@@ -31,6 +31,13 @@
 %%%===================================================================
 %%% API
 %%%===================================================================
+%% -----------------------------------------------------------------
+%% Func:
+%% Description:删除配置项
+%% Returns:
+%% -----------------------------------------------------------------
+del(Table, Key)->
+	gen_server:call(?SERVER, {del, Table, Key}).
 %% -----------------------------------------------------------------
 %% Func:
 %% Description:存储配置
@@ -125,6 +132,14 @@ init(_) ->
 	{noreply, NewState :: #state{}, timeout() | hibernate} |
 	{stop, Reason :: term(), Reply :: term(), NewState :: #state{}} |
 	{stop, Reason :: term(), NewState :: #state{}}).
+handle_call({del, Table, Key}, _From, State) ->
+	try
+		ets:delete(Table, Key)
+	catch
+		E1:E2:E3 ->
+			{reply, {err, {E1, E2, E3}}, State}
+	end,
+	{reply, ok, State};
 handle_call({set, Table, Key, Value}, _From, #state{ets = Ets,
 	ets_opts = Opts} = State) ->
 	try
